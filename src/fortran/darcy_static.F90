@@ -1,14 +1,14 @@
 PROGRAM StaticDarcyExample
 
+  !PROGRAM LIBRARIES
+
   USE OpenCMISS
   USE OpenCMISS_Iron
 
 #ifndef NOMPIMOD
   USE MPI
 #endif
-
   IMPLICIT NONE
-
 #ifdef NOMPIMOD
 #include "mpif.h"
 #endif
@@ -115,7 +115,7 @@ PROGRAM StaticDarcyExample
   TYPE(cmfe_FieldType) :: DependentFieldDarcy
   TYPE(cmfe_FieldType) :: MaterialsFieldDarcy
 
-    TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh
+  TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh
   !Boundary conditions
   TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditionsDarcy
   !Equations sets
@@ -161,41 +161,18 @@ PROGRAM StaticDarcyExample
   !
 
   !PROBLEM CONTROL PANEL
-
   NUMBER_GLOBAL_X_ELEMENTS=1
   NUMBER_GLOBAL_Y_ELEMENTS=3
   NUMBER_GLOBAL_Z_ELEMENTS=1
-  BASIS_XI_INTERPOLATION_GEOMETRY=CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION
-
-  !BASIS_NUMBER_GEOMETRY=CM%ID_M
-  !BASIS_NUMBER_VELOCITY=CM%ID_V
-  !BASIS_NUMBER_PRESSURE=CM%ID_P
   NUMBER_OF_DIMENSIONS=3
   BASIS_TYPE=CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION
-  !BASIS_XI_INTERPOLATION_GEOMETRY=CM%IT_M
+  BASIS_XI_INTERPOLATION_GEOMETRY=CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION
   BASIS_XI_INTERPOLATION_VELOCITY=CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION
   BASIS_XI_INTERPOLATION_PRESSURE=CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION
-  !NUMBER_OF_NODES_GEOMETRY=CM%N_M
-  !NUMBER_OF_NODES_VELOCITY=CM%N_V
-  !NUMBER_OF_NODES_PRESSURE=CM%N_P
-  !TOTAL_NUMBER_OF_NODES=CM%N_T
-  !TOTAL_NUMBER_OF_ELEMENTS=CM%E_T
-  !NUMBER_OF_ELEMENT_NODES_GEOMETRY=CM%EN_M
-  !NUMBER_OF_ELEMENT_NODES_VELOCITY=CM%EN_V
-  !NUMBER_OF_ELEMENT_NODES_PRESSURE=CM%EN_P
-  !Set domain dimensions
-  !DOMAIN_X1 = -5.0_CMISSRP
-  !DOMAIN_X2 =  5.0_CMISSRP
-  !DOMAIN_Y1 = -5.0_CMISSRP
-  !DOMAIN_Y2 =  5.0_CMISSRP
-  !DOMAIN_Z1 = -5.0_CMISSRP
-  !DOMAIN_Z2 =  5.0_CMISSRP
-  !Set geometric tolerance
-  !GEOMETRY_TOLERANCE = 1.0E-12_CMISSRP
   !Set initial values
-  !INITIAL_FIELD_DARCY(1)=0.0_CMISSRP
-  !INITIAL_FIELD_DARCY(2)=0.0_CMISSRP
-  !INITIAL_FIELD_DARCY(3)=0.0_CMISSRP
+  INITIAL_FIELD_DARCY(1)=0.0_CMISSRP
+  INITIAL_FIELD_DARCY(2)=0.0_CMISSRP
+  INITIAL_FIELD_DARCY(3)=0.0_CMISSRP
   !Set material parameters
   POROSITY_PARAM_DARCY=0.3_CMISSRP
   PERM_OVER_VIS_PARAM_DARCY=0.8_CMISSRP
@@ -354,7 +331,6 @@ PROGRAM StaticDarcyExample
 
   !MESH
 
-
   !Start the creation of a generated mesh in the region
   CALL cmfe_GeneratedMesh_Initialise(GeneratedMesh,Err)
   CALL cmfe_GeneratedMesh_CreateStart(GeneratedMeshUserNumber,Region,GeneratedMesh,Err)
@@ -374,7 +350,6 @@ PROGRAM StaticDarcyExample
   !Finish the creation of a generated mesh in the region
   CALL cmfe_Mesh_Initialise(Mesh,Err)
   CALL cmfe_GeneratedMesh_CreateFinish(GeneratedMesh,MeshUserNumber,Mesh,Err)
-
 
   !
   !================================================================================================================================
@@ -435,20 +410,15 @@ PROGRAM StaticDarcyExample
 
   !Create the equations set dependent field variables for Static Darcy
   CALL cmfe_Field_Initialise(DependentFieldDarcy,Err)
-  CALL cmfe_EquationsSet_DependentCreateStart(EquationsSetDarcy,DependentFieldUserNumberDarcy, &
-    & DependentFieldDarcy,Err)
+  CALL cmfe_EquationsSet_DependentCreateStart(EquationsSetDarcy,DependentFieldUserNumberDarcy,DependentFieldDarcy,Err)
   !Set the mesh component to be used by the field components.
   DO COMPONENT_NUMBER=1,NUMBER_OF_DIMENSIONS
-    CALL cmfe_Field_ComponentMeshComponentSet(DependentFieldDarcy,CMFE_FIELD_U_VARIABLE_TYPE,COMPONENT_NUMBER, &
-      & 1,Err)
-    CALL cmfe_Field_ComponentMeshComponentSet(DependentFieldDarcy,CMFE_FIELD_DELUDELN_VARIABLE_TYPE,COMPONENT_NUMBER, &
-      & 1,Err)
+    CALL cmfe_Field_ComponentMeshComponentSet(DependentFieldDarcy,CMFE_FIELD_U_VARIABLE_TYPE,COMPONENT_NUMBER,1,Err)
+    CALL cmfe_Field_ComponentMeshComponentSet(DependentFieldDarcy,CMFE_FIELD_DELUDELN_VARIABLE_TYPE,COMPONENT_NUMBER,1,Err)
   ENDDO
   COMPONENT_NUMBER=NUMBER_OF_DIMENSIONS+1
-    CALL cmfe_Field_ComponentMeshComponentSet(DependentFieldDarcy,CMFE_FIELD_U_VARIABLE_TYPE,COMPONENT_NUMBER, &
-      & 1,Err)
-    CALL cmfe_Field_ComponentMeshComponentSet(DependentFieldDarcy,CMFE_FIELD_DELUDELN_VARIABLE_TYPE,COMPONENT_NUMBER, &
-      & 1,Err)
+    CALL cmfe_Field_ComponentMeshComponentSet(DependentFieldDarcy,CMFE_FIELD_U_VARIABLE_TYPE,COMPONENT_NUMBER,1,Err)
+    CALL cmfe_Field_ComponentMeshComponentSet(DependentFieldDarcy,CMFE_FIELD_DELUDELN_VARIABLE_TYPE,COMPONENT_NUMBER,1,Err)
   !Finish the equations set dependent field variables
   CALL cmfe_EquationsSet_DependentCreateFinish(EquationsSetDarcy,Err)
 
@@ -466,8 +436,7 @@ PROGRAM StaticDarcyExample
 
   !Create the equations set materials field variables for Static Darcy
   CALL cmfe_Field_Initialise(MaterialsFieldDarcy,Err)
-  CALL cmfe_EquationsSet_MaterialsCreateStart(EquationsSetDarcy,MaterialsFieldUserNumberDarcy, &
-    & MaterialsFieldDarcy,Err)
+  CALL cmfe_EquationsSet_MaterialsCreateStart(EquationsSetDarcy,MaterialsFieldUserNumberDarcy,MaterialsFieldDarcy,Err)
   !Finish the equations set materials field variables
   CALL cmfe_EquationsSet_MaterialsCreateFinish(EquationsSetDarcy,Err)
   CALL cmfe_Field_ComponentValuesInitialise(MaterialsFieldDarcy,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE, &
