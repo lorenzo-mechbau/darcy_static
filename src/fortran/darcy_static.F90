@@ -136,10 +136,6 @@ PROGRAM darcy_static
   INTEGER(CMISSIntg) :: EquationsSetIndex,i
   INTEGER(CMISSIntg) :: Err
 
-
-  INTEGER(CMISSIntg) :: DIAG_LEVEL_LIST(5)
-  CHARACTER(LEN=255) :: DIAG_ROUTINE_LIST(1) !,TIMING_ROUTINE_LIST(1)
-
   !
   !================================================================================================================================
   !
@@ -381,7 +377,7 @@ PROGRAM darcy_static
 
   !Create the equations set analytic field variables
 !  CALL cmfe_Field_Initialise(AnalyticField,Err)
-!  CALL cmfe_EquationsSet_AnalyticCreateStart(EquationsSetDarcy,CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3, &
+!  CALL cmfe_EquationsSet_AnalyticCreateStart(EquationsSetDarcy,CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1, &
 !    & AnalyticFieldUserNumber,AnalyticField,Err)
   !Finish the equations set analytic field variables
 !  CALL cmfe_EquationsSet_AnalyticCreateFinish(EquationsSetDarcy,Err)
@@ -543,7 +539,7 @@ PROGRAM darcy_static
   !
 
   !OUTPUT
-  EXPORT_FIELD_IO=.TRUE.
+  EXPORT_FIELD_IO=.FALSE.
   IF(EXPORT_FIELD_IO) THEN
     WRITE(*,'(A)') "Exporting fields..."
     CALL cmfe_Fields_Initialise(Fields,Err)

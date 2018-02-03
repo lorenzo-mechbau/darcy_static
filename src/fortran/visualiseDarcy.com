@@ -1,5 +1,5 @@
-gfx read node "./StaticDarcy.part0.exnode";
-gfx read element "./StaticDarcy.part0.exelem";
+gfx read node "./output/STATIC_SOLUTION.part0.exnode";
+gfx read element "./output/STATIC_SOLUTION.part0.exelem";
 
 gfx define field Coordinate.x component Coordinate.x
 gfx define field Coordinate.y component Coordinate.y
