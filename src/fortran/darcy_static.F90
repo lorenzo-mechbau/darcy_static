@@ -86,50 +86,32 @@ PROGRAM darcy_static
 
   !CMISS variables
 
-  !Regions
   TYPE(cmfe_RegionType) :: Region
   TYPE(cmfe_RegionType) :: WorldRegion
-  !Coordinate systems
   TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
   TYPE(cmfe_CoordinateSystemType) :: WorldCoordinateSystem
-  !Basis
   TYPE(cmfe_BasisType) :: BasisGeometry
   TYPE(cmfe_BasisType) :: BasisVelocity
   TYPE(cmfe_BasisType) :: BasisPressure
-  !Nodes
   TYPE(cmfe_NodesType) :: Nodes
-  !Elements
   TYPE(cmfe_MeshElementsType) :: MeshElementsGeometry
   TYPE(cmfe_MeshElementsType) :: MeshElementsVelocity
   TYPE(cmfe_MeshElementsType) :: MeshElementsPressure
-  !Meshes
   TYPE(cmfe_MeshType) :: Mesh
-  !Decompositions
   TYPE(cmfe_DecompositionType) :: Decomposition
-  !Fields
   TYPE(cmfe_FieldsType) :: Fields
-  !Field types
   TYPE(cmfe_FieldType) :: GeometricField,AnalyticField
   TYPE(cmfe_FieldType) :: EquationsSetField
   TYPE(cmfe_FieldType) :: DependentFieldDarcy
   TYPE(cmfe_FieldType) :: MaterialsFieldDarcy
-
   TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh
-  !Boundary conditions
   TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditionsDarcy
-  !Equations sets
   TYPE(cmfe_EquationsSetType) :: EquationsSetDarcy
-  !Equations
   TYPE(cmfe_EquationsType) :: EquationsDarcy
-  !Problems
   TYPE(cmfe_ProblemType) :: Problem
-  !Control loops
   TYPE(cmfe_ControlLoopType) :: ControlLoop
-  !Solvers
   TYPE(cmfe_SolverType) :: LinearSolverDarcy
-  !Solver equations
   TYPE(cmfe_SolverEquationsType) :: SolverEquationsDarcy
-  !Computational information
   INTEGER(CMISSIntg) :: NumberOfComputationalNodes,ComputationalNodeNumber,NodeDomain
 
   !Generic CMISS variables
