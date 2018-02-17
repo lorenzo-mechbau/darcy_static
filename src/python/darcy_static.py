@@ -1,3 +1,5 @@
+import os
+
 # Intialise OpenCMISS-Iron
 from opencmiss.iron import iron
 
@@ -300,11 +302,15 @@ problem.Solve()
 #fml.OutputWrite("DiffusionExample.xml")
 #fml.Finalise()
 
+# Ensure output directories exist
+if not os.path.exists('./output'):
+    os.makedirs('./output')
+
 # Export results
 fields = iron.Fields()
 fields.CreateRegion(region)
-fields.NodesExport("StaticDarcy","PYTHON")
-fields.ElementsExport("StaticDarcy","PYTHON")
+fields.NodesExport("output/StaticDarcy","FORTRAN")
+fields.ElementsExport("output/StaticDarcy","FORTRAN")
 fields.Finalise()
 
 iron.Finalise()
