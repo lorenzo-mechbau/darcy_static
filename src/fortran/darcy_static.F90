@@ -11,12 +11,11 @@ PROGRAM darcy_static
 #include "mpif.h"
 #endif
 
-  !
-  !================================================================================================================================
-  !
+  !-----------------------------------------------------------------------------------------------------------
+  ! PROGRAM VARIABLES AND TYPES
+  !-----------------------------------------------------------------------------------------------------------
 
   !Test program parameters
-
   REAL(CMISSRP), PARAMETER :: HEIGHT=1.0_CMISSRP
   REAL(CMISSRP), PARAMETER :: WIDTH=1.0_CMISSRP
   REAL(CMISSRP), PARAMETER :: LENGTH=1.0_CMISSRP
@@ -29,17 +28,16 @@ PROGRAM darcy_static
   INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=6
   INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumberDarcy=7
   INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumberDarcy=8
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumberDarcy=9
-  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=10
-  INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=11
-  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumber=12
-
+  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumberDarcy=9
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumberDarcy=10
+  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=11
+  INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=12
+  INTEGER(CMISSIntg), PARAMETER :: DomainUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: SolverDarcyUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumberDarcyPorosity=1
   INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumberDarcyPermOverVis=2
 
   !Program variables
-
   INTEGER(CMISSIntg) :: NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS
   INTEGER(CMISSIntg) :: NUMBER_OF_DIMENSIONS
   INTEGER(CMISSIntg) :: BASIS_TYPE
@@ -66,8 +64,8 @@ PROGRAM darcy_static
   INTEGER(CMISSIntg) :: TOTAL_NUMBER_OF_ELEMENTS
   INTEGER(CMISSIntg) :: MAXIMUM_ITERATIONS
   INTEGER(CMISSIntg) :: RESTART_VALUE
-  INTEGER(CMISSIntg) :: NUMBER_OF_FIXED_WALL_NODES_DARCY
-  INTEGER(CMISSIntg) :: NUMBER_OF_INLET_WALL_NODES_DARCY
+  INTEGER(CMISSIntg) :: NUMBER_OF_FIXED_WALL_NODES
+  INTEGER(CMISSIntg) :: NUMBER_OF_INLET_WALL_NODES
   INTEGER(CMISSIntg) :: EQUATIONS_DARCY_OUTPUT
   INTEGER(CMISSIntg) :: COMPONENT_NUMBER
   INTEGER(CMISSIntg) :: NODE_NUMBER
@@ -75,22 +73,23 @@ PROGRAM darcy_static
   INTEGER(CMISSIntg) :: NODE_COUNTER
   INTEGER(CMISSIntg) :: CONDITION
   INTEGER(CMISSIntg) :: LINEAR_SOLVER_DARCY_OUTPUT_TYPE
-  INTEGER, ALLOCATABLE, DIMENSION(:):: FIXED_WALL_NODES_DARCY
-  INTEGER, ALLOCATABLE, DIMENSION(:):: INLET_WALL_NODES_DARCY
-  REAL(CMISSRP) :: INITIAL_FIELD_DARCY(3)
-  REAL(CMISSRP) :: BOUNDARY_CONDITIONS_DARCY(3)
+  INTEGER(CMISSIntg) :: ANALYTICAL_TYPE
+  INTEGER, ALLOCATABLE, DIMENSION(:):: FIXED_WALL_NODES
+  INTEGER, ALLOCATABLE, DIMENSION(:):: INLET_WALL_NODES
+  REAL(CMISSRP) :: INITIAL_FIELD(3)
+  REAL(CMISSRP) :: BOUNDARY_CONDITIONS(3)
   REAL(CMISSRP) :: DIVERGENCE_TOLERANCE
   REAL(CMISSRP) :: RELATIVE_TOLERANCE
   REAL(CMISSRP) :: ABSOLUTE_TOLERANCE
+  REAL(CMISSRP) :: LINESEARCH_ALPHA
   REAL(CMISSRP) :: VALUE
-  REAL(CMISSRP) :: POROSITY_PARAM_DARCY,PERM_OVER_VIS_PARAM_DARCY
+  REAL(CMISSRP) :: POROSITY_PARAM,PERM_OVER_VIS_PARAM
   LOGICAL :: EXPORT_FIELD_IO
   LOGICAL :: LINEAR_SOLVER_DARCY_DIRECT_FLAG
-  LOGICAL :: FIXED_WALL_NODES_DARCY_FLAG
-  LOGICAL :: INLET_WALL_NODES_DARCY_FLAG
+  LOGICAL :: FIXED_WALL_NODES_FLAG
+  LOGICAL :: INLET_WALL_NODES_FLAG
 
   !CMISS variables
-
   TYPE(cmfe_RegionType) :: Region
   TYPE(cmfe_RegionType) :: WorldRegion
   TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
@@ -119,33 +118,25 @@ PROGRAM darcy_static
   TYPE(cmfe_SolverEquationsType) :: SolverEquationsDarcy
 
   !Generic CMISS variables
-
   INTEGER(CMISSIntg) :: NumberOfComputationalNodes,ComputationalNodeNumber,NodeDomain
   INTEGER(CMISSIntg) :: EquationsSetIndex,i,BoundaryNodeDomain,Err
 
-  !
-  !================================================================================================================================
-  !
-
-  !INITIALISE OPENCMISS
-
+  !Intialise OpenCMISS
   CALL cmfe_Initialise(WorldCoordinateSystem,WorldRegion,Err)
-  !  CALL cmfe_OutputSetOn("DarcyAnalytic",Err)
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
 
   !Get the computational nodes information
   CALL cmfe_ComputationalNumberOfNodesGet(NumberOfComputationalNodes,Err)
   CALL cmfe_ComputationalNodeNumberGet(ComputationalNodeNumber,Err)
 
-  !
-  !================================================================================================================================
-  !
+  !-----------------------------------------------------------------------------------------------------------
+  ! PROBLEM CONTROL PANEL
+  !-----------------------------------------------------------------------------------------------------------
 
-  !PROBLEM CONTROL PANEL
   NUMBER_GLOBAL_X_ELEMENTS=3
   NUMBER_GLOBAL_Y_ELEMENTS=3
   NUMBER_GLOBAL_Z_ELEMENTS=3
-  NUMBER_OF_DIMENSIONS=2
+  NUMBER_OF_DIMENSIONS=3
   MESH_COMPONENT_NUMBER_GEOMETRY=1
   MESH_COMPONENT_NUMBER_VELOCITY=1
   MESH_COMPONENT_NUMBER_PRESSURE=1
@@ -154,29 +145,30 @@ PROGRAM darcy_static
   BASIS_XI_INTERPOLATION_VELOCITY=CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION
   BASIS_XI_INTERPOLATION_PRESSURE=CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION
   !Set initial values
-  INITIAL_FIELD_DARCY(1)=0.0_CMISSRP
-  INITIAL_FIELD_DARCY(2)=0.0_CMISSRP
-  INITIAL_FIELD_DARCY(3)=0.0_CMISSRP
+  INITIAL_FIELD(1)=0.0_CMISSRP
+  INITIAL_FIELD(2)=0.0_CMISSRP
+  INITIAL_FIELD(3)=0.0_CMISSRP
   !Set boundary conditions
-  FIXED_WALL_NODES_DARCY_FLAG=.TRUE.
-  INLET_WALL_NODES_DARCY_FLAG=.TRUE.
-  IF(FIXED_WALL_NODES_DARCY_FLAG) THEN
-     NUMBER_OF_FIXED_WALL_NODES_DARCY=8
-     ALLOCATE(FIXED_WALL_NODES_DARCY(NUMBER_OF_FIXED_WALL_NODES_DARCY))
-     FIXED_WALL_NODES_DARCY=[1,4,5,8,9,12,13,16]
+  FIXED_WALL_NODES_FLAG=.TRUE.
+  INLET_WALL_NODES_FLAG=.TRUE.
+  IF(FIXED_WALL_NODES_FLAG) THEN
+     NUMBER_OF_FIXED_WALL_NODES=48
+     ALLOCATE(FIXED_WALL_NODES(NUMBER_OF_FIXED_WALL_NODES))
+     FIXED_WALL_NODES=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,17,20,21,24,25, &
+        & 28,29,32,33,36,37,40,41,44,45,48]
   ENDIF
-  IF(INLET_WALL_NODES_DARCY_FLAG) THEN
-     NUMBER_OF_INLET_WALL_NODES_DARCY=2
-     ALLOCATE(INLET_WALL_NODES_DARCY(NUMBER_OF_INLET_WALL_NODES_DARCY))
-     INLET_WALL_NODES_DARCY=[2,3]
+  IF(INLET_WALL_NODES_FLAG) THEN
+     NUMBER_OF_INLET_WALL_NODES=4
+     ALLOCATE(INLET_WALL_NODES(NUMBER_OF_INLET_WALL_NODES))
+     INLET_WALL_NODES=[18,19,34,35]
      !Set initial boundary conditions
-     BOUNDARY_CONDITIONS_DARCY(1)=0.0_CMISSRP
-     BOUNDARY_CONDITIONS_DARCY(2)=1.0_CMISSRP
-     BOUNDARY_CONDITIONS_DARCY(3)=0.0_CMISSRP
+     BOUNDARY_CONDITIONS(1)=0.0_CMISSRP
+     BOUNDARY_CONDITIONS(2)=1.0_CMISSRP
+     BOUNDARY_CONDITIONS(3)=0.0_CMISSRP
   ENDIF
   !Set material parameters
-  POROSITY_PARAM_DARCY=0.5_CMISSRP
-  PERM_OVER_VIS_PARAM_DARCY=0.8_CMISSRP
+  POROSITY_PARAM=0.5_CMISSRP
+  PERM_OVER_VIS_PARAM=0.8_CMISSRP
   !Set number of Gauss points
   BASIS_XI_GAUSS_GEOMETRY=3
   BASIS_XI_GAUSS_VELOCITY=3
@@ -193,12 +185,16 @@ PROGRAM darcy_static
   DIVERGENCE_TOLERANCE=1.0E5_CMISSRP !default: 1.0E5
   MAXIMUM_ITERATIONS=10000_CMISSIntg !default: 100000
   RESTART_VALUE=3000_CMISSIntg !default: 30
+  LINESEARCH_ALPHA=1.0_CMISSRP
 
-  !
-  !================================================================================================================================
-  !
+  !IF(NUMBER_OF_DIMENSIONS==2) ANALYTICAL_TYPE=CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2
+  IF(NUMBER_OF_DIMENSIONS==2) ANALYTICAL_TYPE=CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3
+  !IF(NUMBER_OF_DIMENSIONS==3) ANALYTICAL_TYPE=CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2
+  IF(NUMBER_OF_DIMENSIONS==3) ANALYTICAL_TYPE=CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3
 
-  !COORDINATE SYSTEM
+  !-----------------------------------------------------------------------------------------------------------
+  ! COORDINATE SYSTEM
+  !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of a new RC coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
@@ -208,11 +204,9 @@ PROGRAM darcy_static
   !Finish the creation of the coordinate system
   CALL cmfe_CoordinateSystem_CreateFinish(CoordinateSystem,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !REGION
+  !-----------------------------------------------------------------------------------------------------------
+  ! REGION
+  !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of a new region
   CALL cmfe_Region_Initialise(Region,Err)
@@ -223,11 +217,9 @@ PROGRAM darcy_static
   !Finish the creation of the region
   CALL cmfe_Region_CreateFinish(Region,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !BASES
+  !-----------------------------------------------------------------------------------------------------------
+  ! BASIS
+  !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of new bases
   MESH_NUMBER_OF_COMPONENTS=1
@@ -251,11 +243,9 @@ PROGRAM darcy_static
   !Finish the creation of the basis
   CALL cmfe_Basis_CreateFinish(BasisGeometry,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !MESH
+  !-----------------------------------------------------------------------------------------------------------
+  ! MESH
+  !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of a generated mesh in the region
   CALL cmfe_GeneratedMesh_Initialise(GeneratedMesh,Err)
@@ -277,11 +267,9 @@ PROGRAM darcy_static
   CALL cmfe_Mesh_Initialise(Mesh,Err)
   CALL cmfe_GeneratedMesh_CreateFinish(GeneratedMesh,MeshUserNumber,Mesh,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !MESH DECOMPOSITION
+  !-----------------------------------------------------------------------------------------------------------
+  ! MESH DECOMPOSITION
+  !-----------------------------------------------------------------------------------------------------------
 
   !Create a decomposition
   CALL cmfe_Decomposition_Initialise(Decomposition,Err)
@@ -292,11 +280,9 @@ PROGRAM darcy_static
   !Finish the decomposition
   CALL cmfe_Decomposition_CreateFinish(Decomposition,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !GEOMETRIC FIELD
+  !-----------------------------------------------------------------------------------------------------------
+  ! GEOMETRIC FIELD
+  !-----------------------------------------------------------------------------------------------------------
 
   !Start to create a default (geometric) field on the region
   CALL cmfe_Field_Initialise(GeometricField,Err)
@@ -317,11 +303,9 @@ PROGRAM darcy_static
   !Update the geometric field parameters
   CALL cmfe_GeneratedMesh_GeometricParametersCalculate(GeneratedMesh,GeometricField,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !EQUATIONS SETS
+  !-----------------------------------------------------------------------------------------------------------
+  ! EQUATIONS SETS
+  !-----------------------------------------------------------------------------------------------------------
 
   !Create the equations set for Static Darcy
   CALL cmfe_EquationsSet_Initialise(EquationsSetDarcy,Err)
@@ -332,11 +316,9 @@ PROGRAM darcy_static
   !Finish creating the equations set
   CALL cmfe_EquationsSet_CreateFinish(EquationsSetDarcy,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !DEPENDENT FIELDS
+  !-----------------------------------------------------------------------------------------------------------
+  ! DEPENDENT FIELD
+  !-----------------------------------------------------------------------------------------------------------
 
   !Create the equations set dependent field variables for Static Darcy
   CALL cmfe_Field_Initialise(DependentFieldDarcy,Err)
@@ -355,14 +337,12 @@ PROGRAM darcy_static
   !Initialise dependent field (velocity components)
   DO COMPONENT_NUMBER=1,NUMBER_OF_DIMENSIONS
      CALL cmfe_Field_ComponentValuesInitialise(DependentFieldDarcy,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE, &
-          & COMPONENT_NUMBER,INITIAL_FIELD_DARCY(COMPONENT_NUMBER),Err)
+          & COMPONENT_NUMBER,INITIAL_FIELD(COMPONENT_NUMBER),Err)
   ENDDO
 
-  !
-  !================================================================================================================================
-  !
-
-  !MATERIALS FIELDS
+  !-----------------------------------------------------------------------------------------------------------
+  ! MATERIALS FIELD
+  !-----------------------------------------------------------------------------------------------------------
 
   !Create the equations set materials field variables for Static Darcy
   CALL cmfe_Field_Initialise(MaterialsFieldDarcy,Err)
@@ -370,28 +350,23 @@ PROGRAM darcy_static
   !Finish the equations set materials field variables
   CALL cmfe_EquationsSet_MaterialsCreateFinish(EquationsSetDarcy,Err)
   CALL cmfe_Field_ComponentValuesInitialise(MaterialsFieldDarcy,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE, &
-       & MaterialsFieldUserNumberDarcyPorosity,POROSITY_PARAM_DARCY,Err)
+       & MaterialsFieldUserNumberDarcyPorosity,POROSITY_PARAM,Err)
   CALL cmfe_Field_ComponentValuesInitialise(MaterialsFieldDarcy,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE, &
-       & MaterialsFieldUserNumberDarcyPermOverVis,PERM_OVER_VIS_PARAM_DARCY,Err)
+       & MaterialsFieldUserNumberDarcyPermOverVis,PERM_OVER_VIS_PARAM,Err)
 
-  !
-  !================================================================================================================================
-  !
+  !-----------------------------------------------------------------------------------------------------------
+  ! ANALYTIC FIELD
+  !-----------------------------------------------------------------------------------------------------------
 
-  !ANALYTIC FIELD
-
-  !Create the equations set analytic field variables
-  CALL cmfe_Field_Initialise(AnalyticField,Err)
-  CALL cmfe_EquationsSet_AnalyticCreateStart(EquationsSetDarcy,CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1, &
-       & AnalyticFieldUserNumber,AnalyticField,Err)
+  !Create the equations set analytic field variables for static Darcy
+  !CALL cmfe_Field_Initialise(AnalyticField,Err)
+  !CALL cmfe_EquationsSet_AnalyticCreateStart(EquationsSetDarcy,ANALYTICAL_TYPE,AnalyticFieldUserNumberDarcy,AnalyticField,Err)
   !Finish the equations set analytic field variables
-  CALL cmfe_EquationsSet_AnalyticCreateFinish(EquationsSetDarcy,Err)
+  !CALL cmfe_EquationsSet_AnalyticCreateFinish(EquationsSetDarcy,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !EQUATIONS
+  !-----------------------------------------------------------------------------------------------------------
+  ! EQUATIONS
+  !-----------------------------------------------------------------------------------------------------------
 
   !Create the equations set equations
   CALL cmfe_Equations_Initialise(EquationsDarcy,Err)
@@ -403,11 +378,9 @@ PROGRAM darcy_static
   !Finish the equations set equations
   CALL cmfe_EquationsSet_EquationsCreateFinish(EquationsSetDarcy,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !PROBLEMS
+  !-----------------------------------------------------------------------------------------------------------
+  ! PROBLEM
+  !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of a problem.
   CALL cmfe_Problem_Initialise(Problem,Err)
@@ -421,11 +394,9 @@ PROGRAM darcy_static
   !Finish creating the problem control loop
   CALL cmfe_Problem_ControlLoopCreateFinish(Problem,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !SOLVERS
+  !-----------------------------------------------------------------------------------------------------------
+  ! SOLVER
+  !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of the problem solvers
   CALL cmfe_Solver_Initialise(LinearSolverDarcy,Err)
@@ -449,11 +420,9 @@ PROGRAM darcy_static
   !Finish the creation of the problem solver
   CALL cmfe_Problem_SolversCreateFinish(Problem,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !SOLVER EQUATIONS
+  !-----------------------------------------------------------------------------------------------------------
+  ! SOLVER EQUATIONS
+  !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of the problem solver equations
   CALL cmfe_Solver_Initialise(LinearSolverDarcy,Err)
@@ -470,18 +439,17 @@ PROGRAM darcy_static
   !Finish the creation of the problem solver equations
   CALL cmfe_Problem_SolverEquationsCreateFinish(Problem,Err)
 
-  !
-  !================================================================================================================================
-  !
+  !-----------------------------------------------------------------------------------------------------------
+  ! BOUNDARY CONDITIONS
+  !-----------------------------------------------------------------------------------------------------------
 
-  !BOUNDARY CONDITIONS
   !Start the creation of the equations set boundary conditions for Darcy
   CALL cmfe_BoundaryConditions_Initialise(BoundaryConditionsDarcy,Err)
   CALL cmfe_SolverEquations_BoundaryConditionsCreateStart(SolverEquationsDarcy,BoundaryConditionsDarcy,Err)
   !Set fixed wall nodes
-  IF(FIXED_WALL_NODES_DARCY_FLAG) THEN
-     DO NODE_COUNTER=1,NUMBER_OF_FIXED_WALL_NODES_DARCY
-        NODE_NUMBER=FIXED_WALL_NODES_DARCY(NODE_COUNTER)
+  IF(FIXED_WALL_NODES_FLAG) THEN
+     DO NODE_COUNTER=1,NUMBER_OF_FIXED_WALL_NODES
+        NODE_NUMBER=FIXED_WALL_NODES(NODE_COUNTER)
         CONDITION=CMFE_BOUNDARY_CONDITION_FIXED
         CALL cmfe_Decomposition_NodeDomainGet(Decomposition,NODE_NUMBER,1,BoundaryNodeDomain,Err)
         IF(BoundaryNodeDomain==ComputationalNodeNumber) THEN
@@ -494,45 +462,40 @@ PROGRAM darcy_static
      ENDDO
   ENDIF
   !Set velocity boundary conditions
-  IF(INLET_WALL_NODES_DARCY_FLAG) THEN
-     DO NODE_COUNTER=1,NUMBER_OF_INLET_WALL_NODES_DARCY
-        NODE_NUMBER=INLET_WALL_NODES_DARCY(NODE_COUNTER)
+  IF(INLET_WALL_NODES_FLAG) THEN
+     DO NODE_COUNTER=1,NUMBER_OF_INLET_WALL_NODES
+        NODE_NUMBER=INLET_WALL_NODES(NODE_COUNTER)
         CONDITION=CMFE_BOUNDARY_CONDITION_FIXED
         CALL cmfe_Decomposition_NodeDomainGet(Decomposition,NODE_NUMBER,1,BoundaryNodeDomain,Err)
         IF(BoundaryNodeDomain==ComputationalNodeNumber) THEN
            DO COMPONENT_NUMBER=1,NUMBER_OF_DIMENSIONS
-              VALUE=BOUNDARY_CONDITIONS_DARCY(COMPONENT_NUMBER)
+              VALUE=BOUNDARY_CONDITIONS(COMPONENT_NUMBER)
               CALL cmfe_BoundaryConditions_SetNode(BoundaryConditionsDarcy,DependentFieldDarcy,CMFE_FIELD_U_VARIABLE_TYPE,1, &
                    & CMFE_NO_GLOBAL_DERIV,NODE_NUMBER,COMPONENT_NUMBER,CONDITION,VALUE,Err)
            ENDDO
         ENDIF
      ENDDO
   ENDIF
-  CALL cmfe_SolverEquations_BoundaryConditionsAnalytic(SolverEquationsDarcy,Err)
+  !CALL cmfe_SolverEquations_BoundaryConditionsAnalytic(SolverEquationsDarcy,Err)
   !Finish the creation of the equations set boundary conditions
   CALL cmfe_SolverEquations_BoundaryConditionsCreateFinish(SolverEquationsDarcy,Err)
 
-  !
-  !================================================================================================================================
-  !
-
-  !Output Analytic analysis
-  CALL cmfe_AnalyticAnalysis_Output(DependentFieldDarcy,"DarcyAnalytic",Err)
-
-  !
-  !================================================================================================================================
-  !
+  !-----------------------------------------------------------------------------------------------------------
+  ! SOLVE
+  !-----------------------------------------------------------------------------------------------------------
 
   !Solve the problem
   WRITE(*,'(A)') "Solving problem..."
   CALL cmfe_Problem_Solve(Problem,Err)
   WRITE(*,'(A)') "Problem solved!"
 
-  !
-  !================================================================================================================================
-  !
+  !-----------------------------------------------------------------------------------------------------------
+  ! OUTPUT
+  !-----------------------------------------------------------------------------------------------------------
 
-  !OUTPUT
+  !Output Analytic Analysis
+  !CALL cmfe_AnalyticAnalysis_Output(DependentFieldDarcy,"DarcyAnalytic",Err)
+
   EXPORT_FIELD_IO=.FALSE.
   IF(EXPORT_FIELD_IO) THEN
      WRITE(*,'(A)') "Exporting fields..."

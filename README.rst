@@ -26,7 +26,7 @@ Fortran version::
   cd src/fortran/
   ./darcy_static_fortran
 
-The results can be visualised by running `visualise.com <./src/fortran/visualise.com>`_ with the `Cmgui visualiser <http://physiomeproject.org/software/opencmiss/cmgui/download>`_.
+The results can be visualised by running `visualiseDarcyStatic.cmgui <./src/fortran/visualiseDarcyStatic.cmgui>`_ with the `Cmgui visualiser <http://physiomeproject.org/software/opencmiss/cmgui/download>`_.
 
 
 Prerequisites
