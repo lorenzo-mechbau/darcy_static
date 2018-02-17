@@ -136,7 +136,7 @@ PROGRAM darcy_static
   NUMBER_GLOBAL_X_ELEMENTS=3
   NUMBER_GLOBAL_Y_ELEMENTS=3
   NUMBER_GLOBAL_Z_ELEMENTS=3
-  NUMBER_OF_DIMENSIONS=2
+  NUMBER_OF_DIMENSIONS=3
   MESH_COMPONENT_NUMBER_GEOMETRY=1
   MESH_COMPONENT_NUMBER_VELOCITY=1
   MESH_COMPONENT_NUMBER_PRESSURE=1
@@ -152,22 +152,23 @@ PROGRAM darcy_static
   FIXED_WALL_NODES_FLAG=.TRUE.
   INLET_WALL_NODES_FLAG=.TRUE.
   IF(FIXED_WALL_NODES_FLAG) THEN
-     NUMBER_OF_FIXED_WALL_NODES=8
+     NUMBER_OF_FIXED_WALL_NODES=48
      ALLOCATE(FIXED_WALL_NODES(NUMBER_OF_FIXED_WALL_NODES))
-     FIXED_WALL_NODES=[1,4,5,8,9,12,13,16]
+     FIXED_WALL_NODES=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,17,20,21,24,25, &
+        & 28,29,32,33,36,37,40,41,44,45,48]
   ENDIF
   IF(INLET_WALL_NODES_FLAG) THEN
-     NUMBER_OF_INLET_WALL_NODES=2
+     NUMBER_OF_INLET_WALL_NODES=4
      ALLOCATE(INLET_WALL_NODES(NUMBER_OF_INLET_WALL_NODES))
-     INLET_WALL_NODES=[2,3]
+     INLET_WALL_NODES=[18,19,34,35]
      !Set initial boundary conditions
      BOUNDARY_CONDITIONS(1)=0.0_CMISSRP
      BOUNDARY_CONDITIONS(2)=1.0_CMISSRP
      BOUNDARY_CONDITIONS(3)=0.0_CMISSRP
   ENDIF
   !Set material parameters
-  POROSITY_PARAM=1.0_CMISSRP
-  PERM_OVER_VIS_PARAM=1.0_CMISSRP
+  POROSITY_PARAM=0.5_CMISSRP
+  PERM_OVER_VIS_PARAM=0.8_CMISSRP
   !Set number of Gauss points
   BASIS_XI_GAUSS_GEOMETRY=3
   BASIS_XI_GAUSS_VELOCITY=3
@@ -358,10 +359,10 @@ PROGRAM darcy_static
   !-----------------------------------------------------------------------------------------------------------
 
   !Create the equations set analytic field variables for static Darcy
-  CALL cmfe_Field_Initialise(AnalyticField,Err)
-  CALL cmfe_EquationsSet_AnalyticCreateStart(EquationsSetDarcy,ANALYTICAL_TYPE,AnalyticFieldUserNumberDarcy,AnalyticField,Err)
+  !CALL cmfe_Field_Initialise(AnalyticField,Err)
+  !CALL cmfe_EquationsSet_AnalyticCreateStart(EquationsSetDarcy,ANALYTICAL_TYPE,AnalyticFieldUserNumberDarcy,AnalyticField,Err)
   !Finish the equations set analytic field variables
-  CALL cmfe_EquationsSet_AnalyticCreateFinish(EquationsSetDarcy,Err)
+  !CALL cmfe_EquationsSet_AnalyticCreateFinish(EquationsSetDarcy,Err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! EQUATIONS
@@ -475,7 +476,7 @@ PROGRAM darcy_static
         ENDIF
      ENDDO
   ENDIF
-  CALL cmfe_SolverEquations_BoundaryConditionsAnalytic(SolverEquationsDarcy,Err)
+  !CALL cmfe_SolverEquations_BoundaryConditionsAnalytic(SolverEquationsDarcy,Err)
   !Finish the creation of the equations set boundary conditions
   CALL cmfe_SolverEquations_BoundaryConditionsCreateFinish(SolverEquationsDarcy,Err)
 
@@ -493,7 +494,7 @@ PROGRAM darcy_static
   !-----------------------------------------------------------------------------------------------------------
 
   !Output Analytic Analysis
-  CALL cmfe_AnalyticAnalysis_Output(DependentFieldDarcy,"DarcyAnalytic",Err)
+  !CALL cmfe_AnalyticAnalysis_Output(DependentFieldDarcy,"DarcyAnalytic",Err)
 
   EXPORT_FIELD_IO=.FALSE.
   IF(EXPORT_FIELD_IO) THEN
