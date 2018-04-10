@@ -40,8 +40,9 @@ numberGlobalZElements = 5
 # DIAGNOSTICS AND COMPUTATIONAL NODE INFORMATION
 #-----------------------------------------------------------------------------------------------------------
 
-numberOfComputationalNodes = iron.ComputationalNumberOfNodesGet()
-computationalNodeNumber = iron.ComputationalNodeNumberGet()
+computationEnvironment = iron.ComputationEnvironment()
+numberOfComputationalNodes = computationEnvironment.NumberOfWorldNodesGet()
+computationalNodeNumber = computationEnvironment.WorldNodeNumberGet()
 
 #-----------------------------------------------------------------------------------------------------------
 #COORDINATE SYSTEM
