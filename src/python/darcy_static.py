@@ -36,11 +36,15 @@ numberGlobalXElements = 5
 numberGlobalYElements = 5
 numberGlobalZElements = 5
 
+worldRegion = iron.Region()
+iron.Context.WorldRegionGet(worldRegion)
+
 #-----------------------------------------------------------------------------------------------------------
 # DIAGNOSTICS AND COMPUTATIONAL NODE INFORMATION
 #-----------------------------------------------------------------------------------------------------------
 
 computationEnvironment = iron.ComputationEnvironment()
+iron.Context.ComputationEnvironmentGet(computationEnvironment)
 numberOfComputationalNodes = computationEnvironment.NumberOfWorldNodesGet()
 computationalNodeNumber = computationEnvironment.WorldNodeNumberGet()
 
@@ -50,7 +54,7 @@ computationalNodeNumber = computationEnvironment.WorldNodeNumberGet()
 
 # Create a RC coordinate system
 coordinateSystem = iron.CoordinateSystem()
-coordinateSystem.CreateStart(coordinateSystemUserNumber)
+coordinateSystem.CreateStart(coordinateSystemUserNumber,iron.Context)
 coordinateSystem.dimension = 3
 coordinateSystem.CreateFinish()
 
@@ -71,7 +75,7 @@ region.CreateFinish()
 
 # Create a tri-linear lagrange basis
 basis = iron.Basis()
-basis.CreateStart(basisUserNumber)
+basis.CreateStart(basisUserNumber,iron.Context)
 basis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
 basis.numberOfXi = 3
 basis.interpolationXi = [iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*3
@@ -190,7 +194,7 @@ problem = iron.Problem()
 problemSpecification = [iron.ProblemClasses.FLUID_MECHANICS,
         iron.ProblemTypes.DARCY_EQUATION,
         iron.ProblemSubtypes.STANDARD_DARCY]
-problem.CreateStart(problemUserNumber, problemSpecification)
+problem.CreateStart(problemUserNumber,context,problemSpecification)
 problem.CreateFinish()
 
 # Create control loops
@@ -314,4 +318,4 @@ fields.NodesExport("output/StaticDarcy","FORTRAN")
 fields.ElementsExport("output/StaticDarcy","FORTRAN")
 fields.Finalise()
 
-iron.Finalise()
+iron.Finalise(iron.Context)
