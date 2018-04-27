@@ -64,7 +64,7 @@ coordinateSystem.CreateFinish()
 
 # Create a region
 region = iron.Region()
-region.CreateStart(regionUserNumber,iron.WorldRegion)
+region.CreateStart(regionUserNumber,worldRegion)
 region.label = "DarcyRegion"
 region.coordinateSystem = coordinateSystem
 region.CreateFinish()
@@ -194,7 +194,7 @@ problem = iron.Problem()
 problemSpecification = [iron.ProblemClasses.FLUID_MECHANICS,
         iron.ProblemTypes.DARCY_EQUATION,
         iron.ProblemSubtypes.STANDARD_DARCY]
-problem.CreateStart(problemUserNumber,context,problemSpecification)
+problem.CreateStart(problemUserNumber,iron.Context,problemSpecification)
 problem.CreateFinish()
 
 # Create control loops
